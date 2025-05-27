@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+        <title>Calculator</title>
+        <style>
+            body { 
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                background-color: #f0f0f0;
+            }
+
+            #calculator {
+                font-family: Arial, Helvetica, sans-serif;
+                background-color: #1C1C1C;
+                padding: 60px 5px 20px 5px;
+                width: 400px;
+                max-width: 400px;
+                border-radius: 20px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            }
+
+            #display {
+                background-color: #1C1C1C;
+                color: white;
+                text-align: right;
+                font-size: 90px;
+                border: none;
+                outline: none;
+                width: 100%;
+                box-sizing: border-box;
+                padding: 0 20px;
+                margin-bottom: 20px;
+                height: 100px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            #buttons {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+                padding: 8px;
+            }
+
+            #buttons button {
+                background-color: #505050;
+                color: white;
+                font-size: 36px;
+                text-align: center;
+                width: 80px;
+                height: 80px;
+                border-radius: 40px;
+                border: none;
+                cursor: pointer;
+                transition: opacity 0.1s;
+                user-select: none;
+            }
+
+            #buttons button:hover {
+                opacity: 70%;
+            }
+
+            #buttons button:active {
+                opacity: 90%;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="calculator">
+            <input type="text" id="display" readonly>
+            <div id="buttons"></div>
+        </div>
+        <script>
+            const buttonValues = [
+                "AC", "+/-", "%", "÷", 
+                "7", "8", "9", "×",
+                "4", "5", "6", "-",
+                "1", "2", "3", "+",
+                "0", ".", "="
+            ];
+            const rightSymbols = ["÷", "×", "-", "+", "="];
+            const topSymbols = ["AC", "+/-", "%"];
+
+            const display = document.getElementById("display");
+            display.value = "0";
+
+            //A+B, A×B, A-B, A÷B
+            let A = null;
+            let operator = null;
+            let B = null;
+            let shouldResetDisplay = false;
+
+            function clearAll() {
+                A = null;
+                operator = null;
+                B = null;
+                display.value = "0";
+            }
+
+            function calculate() {
+                if (A == null || operator == null) return;
+                
+                B = display.value;
+                let numA = Number(A);
+                let numB = Number(B);
+                let result = 0;
+
+                switch(operator) {
+                    case "÷":
+                        result = numA / numB;
+                        break;
+                    case "×":
+                        result = numA * numB;
+                        break;
+                    case "-":
+                        result = numA - numB;
+                        break;
+                    case "+":
+                        result = numA + numB;
+                        break;
+                }
+
+                // Handle decimal places
+                result = parseFloat(result.toFixed(10));
+                display.value = result.toString();
+                A = result;
+                shouldResetDisplay = true;
+            }
+
+            for (let i = 0; i < buttonValues.length; i++) {
+                let value = buttonValues[i];
+                let button = document.createElement("button");
+                button.innerText = value;
+                
+                // Styling button colors
+                if (value == "0") {
+                    button.style.width = "180px";
+                    button.style.gridColumn = "span 2"; // Take up 2 columns
+                }
+                else if (rightSymbols.includes(value)) {
+                    button.style.backgroundColor = "#FF9500";
+                }
+                else if (topSymbols.includes(value)) {        
+                    button.style.backgroundColor = "#D4D4D2";
+                    button.style.color = "#1C1C1C";
+                }
+
+                // Process button clicks
+                button.addEventListener("click", function() {
+                    if (rightSymbols.includes(value)) { 
+                        if (value == "=") {
+                            calculate();
+                            operator = null;
+                        }
+                        else {
+                            if (operator && !shouldResetDisplay) {
+                                calculate();
+                            }
+                            operator = value; // ÷ × - +
+                            A = display.value;
+                            shouldResetDisplay = true;
+                        }
+                    }
+                    else if (topSymbols.includes(value)) { // AC +/- %
+                        if (value == "AC") {
+                            clearAll();
+                        }
+                        else if (value == "+/-") {
+                            if (display.value != "0") {
+                                if (display.value[0] == "-") { // Remove -
+                                    display.value = display.value.slice(1); 
+                                } else { // Add -
+                                    display.value = "-" + display.value; 
+                                }
+                            }
+                        }
+                        else if (value == "%") {
+                            display.value = (Number(display.value) / 100).toString();
+                        }
+                    }
+                    else { // Digits or .
+                        if (shouldResetDisplay) {
+                            display.value = "0";
+                            shouldResetDisplay = false;
+                        }
+                        
+                        if (value == ".") {
+                            // Don't add multiple decimal places
+                            if (!display.value.includes(".")) {
+                                display.value += value;
+                            }
+                        }
+                        // Not a dot, number instead
+                        else if (display.value == "0") {
+                            display.value = value;
+                        }
+                        else {
+                            display.value += value;
+                        }
+                    }
+                    
+                    // Remove leading zeros
+                    if (display.value.length > 1 && display.value[0] == "0" && display.value[1] != ".") {
+                        display.value = display.value.substring(1);
+                    }
+                });
+
+                // Add button to calculator
+                document.getElementById("buttons").appendChild(button);
+            }
+        </script>
+    </body>
+</html>
